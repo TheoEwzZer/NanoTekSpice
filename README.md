@@ -296,3 +296,23 @@ files.
 It is FORBIDDEN to manipulate pointers or references to these classes in your graph.
 You must ONLY manipulate pointers and references to nts::IComponent.
 ```
+
+## FINAL MARK
+
+### MARK: 20.5 / 21 (98%)
+
+- Administrative details (2 / 2)
+- Bonus (2 / 0)
+- Basic components (1 / 1)
+- Elementary components (1 / 1)
+- Gate components (1.5 / 1.5)
+- Advanced components (1 / 2.5)
+- Advanced tests (2 / 3)
+- Parsing (1 / 1)
+- Component interface (2 / 2)
+- Component abstract class (2 / 2)
+- Component polymorphism (1 / 1)
+- Advanced architecture (1 / 1)
+- Exception (1 / 1)
+- Template (1 / 1)
+- Memory management (1 / 1)
