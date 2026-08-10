@@ -22,5 +22,8 @@ namespace nts {
             nts::Tristate get2();
             nts::Tristate get12();
             nts::Tristate get13();
+        private:
+            nts::Tristate mPrevClock1;
+            nts::Tristate mPrevClock2;
     };
 }

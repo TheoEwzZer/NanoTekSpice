@@ -7,7 +7,7 @@
 
 #include "Gate4013.hpp"
 
-nts::Gate4013::Gate4013()
+nts::Gate4013::Gate4013() : mPrevClock1(UNDEFINED), mPrevClock2(UNDEFINED)
 {
     mPins[1] = UNDEFINED;
     mPins[2] = UNDEFINED;
@@ -15,107 +15,10 @@ nts::Gate4013::Gate4013()
     mPins[13] = UNDEFINED;
 }
 
-nts::Tristate nts::Gate4013::get1()
-{
-    const nts::Tristate clk = mPins[3];
-    const nts::Tristate reset = mPins[4];
-    const nts::Tristate data = mPins[5];
-    const nts::Tristate set = mPins[6];
-
-    if ((set == TRUE) && (reset != UNDEFINED)) {
-        return TRUE;
-    }
-    if ((set == FALSE) && (reset == TRUE)) {
-        return FALSE;
-    }
-    if ((set == FALSE) && (reset == FALSE)) {
-        if ((clk == TRUE) && (data != UNDEFINED)) {
-            return data;
-        }
-        if (clk == FALSE) {
-            return mPins[1];
-        }
-    }
-    return UNDEFINED;
-}
-
-nts::Tristate nts::Gate4013::get2()
-{
-    const nts::Tristate clk = mPins[3];
-    const nts::Tristate reset = mPins[4];
-    const nts::Tristate data = mPins[5];
-    const nts::Tristate set = mPins[6];
-
-    if ((set == TRUE) && (reset == TRUE)) {
-        return TRUE;
-    }
-    if ((set == TRUE) && (reset != UNDEFINED)) {
-        return FALSE;
-    }
-    if ((set == FALSE) && (reset == TRUE)) {
-        return TRUE;
-    }
-    if ((set == FALSE) && (reset == FALSE)) {
-        if ((clk == TRUE) && (data != UNDEFINED)) {
-            return data == TRUE ? FALSE : TRUE;
-        }
-        if (clk == FALSE) {
-            return mPins[2];
-        }
-    }
-    return UNDEFINED;
-}
-
-nts::Tristate nts::Gate4013::get13()
-{
-    const nts::Tristate clk = mPins[11];
-    const nts::Tristate reset = mPins[10];
-    const nts::Tristate data = mPins[9];
-    const nts::Tristate set = mPins[8];
-
-    if ((set == TRUE) && (reset != UNDEFINED)) {
-        return TRUE;
-    }
-    if ((set == FALSE) && (reset == TRUE)) {
-        return FALSE;
-    }
-    if ((set == FALSE) && (reset == FALSE)) {
-        if ((clk == TRUE) && (data != UNDEFINED)) {
-            return data;
-        }
-        if (clk == FALSE) {
-            return mPins[13];
-        }
-    }
-    return UNDEFINED;
-}
-
-nts::Tristate nts::Gate4013::get12()
-{
-    const nts::Tristate clk = mPins[11];
-    const nts::Tristate reset = mPins[10];
-    const nts::Tristate data = mPins[9];
-    const nts::Tristate set = mPins[8];
-
-    if ((set == TRUE) && (reset == TRUE)) {
-        return TRUE;
-    }
-    if ((set == TRUE) && (reset != UNDEFINED)) {
-        return FALSE;
-    }
-    if ((set == FALSE) && (reset == TRUE)) {
-        return TRUE;
-    }
-    if ((set == FALSE) && (reset == FALSE)) {
-        if ((clk == TRUE) && (data != UNDEFINED)) {
-            return data == TRUE ? FALSE : TRUE;
-        }
-        if (clk == FALSE) {
-            return mPins[12];
-        }
-    }
-    return UNDEFINED;
-}
+nts::Tristate nts::Gate4013::get1() { return mPins[1]; }
+nts::Tristate nts::Gate4013::get2() { return mPins[2]; }
+nts::Tristate nts::Gate4013::get12() { return mPins[12]; }
+nts::Tristate nts::Gate4013::get13() { return mPins[13]; }
 
 nts::Tristate nts::Gate4013::compute(const size_t pin)
 {
@@ -124,21 +27,71 @@ nts::Tristate nts::Gate4013::compute(const size_t pin)
             mPins[i] = getTristate(i);
         }
     }
-    if (pin == 1) {
-        mPins[1] = get1();
-        return mPins[1];
+
+    // Flip-Flop 1 (Pins 1, 2, 3=Clk, 4=R, 5=D, 6=S)
+    const nts::Tristate clk1 = mPins[3];
+    const nts::Tristate rst1 = mPins[4];
+    const nts::Tristate d1 = mPins[5];
+    const nts::Tristate set1 = mPins[6];
+
+    if (set1 == TRUE && rst1 == TRUE) {
+        mPins[1] = TRUE;
+        mPins[2] = TRUE;
+    } else if (set1 == TRUE && rst1 != UNDEFINED) {
+        mPins[1] = TRUE;
+        mPins[2] = FALSE;
+    } else if (set1 == FALSE && rst1 == TRUE) {
+        mPins[1] = FALSE;
+        mPins[2] = TRUE;
+    } else if (set1 == FALSE && rst1 == FALSE) {
+        if (mPrevClock1 == FALSE && clk1 == TRUE) {
+            if (d1 != UNDEFINED) {
+                mPins[1] = d1;
+                mPins[2] = (d1 == TRUE) ? FALSE : TRUE;
+            } else {
+                mPins[1] = UNDEFINED;
+                mPins[2] = UNDEFINED;
+            }
+        }
+    } else {
+        mPins[1] = UNDEFINED;
+        mPins[2] = UNDEFINED;
     }
-    if (pin == 2) {
-        mPins[2] = get2();
-        return mPins[2];
+    mPrevClock1 = clk1;
+
+    // Flip-Flop 2 (Pins 13, 12, 11=Clk, 10=R, 9=D, 8=S)
+    const nts::Tristate clk2 = mPins[11];
+    const nts::Tristate rst2 = mPins[10];
+    const nts::Tristate d2 = mPins[9];
+    const nts::Tristate set2 = mPins[8];
+
+    if (set2 == TRUE && rst2 == TRUE) {
+        mPins[13] = TRUE;
+        mPins[12] = TRUE;
+    } else if (set2 == TRUE && rst2 != UNDEFINED) {
+        mPins[13] = TRUE;
+        mPins[12] = FALSE;
+    } else if (set2 == FALSE && rst2 == TRUE) {
+        mPins[13] = FALSE;
+        mPins[12] = TRUE;
+    } else if (set2 == FALSE && rst2 == FALSE) {
+        if (mPrevClock2 == FALSE && clk2 == TRUE) {
+            if (d2 != UNDEFINED) {
+                mPins[13] = d2;
+                mPins[12] = (d2 == TRUE) ? FALSE : TRUE;
+            } else {
+                mPins[13] = UNDEFINED;
+                mPins[12] = UNDEFINED;
+            }
+        }
+    } else {
+        mPins[13] = UNDEFINED;
+        mPins[12] = UNDEFINED;
     }
-    if (pin == 12) {
-        mPins[12] = get12();
-        return mPins[12];
-    }
-    if (pin == 13) {
-        mPins[13] = get13();
-        return mPins[13];
+    mPrevClock2 = clk2;
+
+    if (pin == 1 || pin == 2 || pin == 12 || pin == 13) {
+        return mPins[pin];
     }
     throw nts::Error(format("Pin {} is not computable.", pin));
 }

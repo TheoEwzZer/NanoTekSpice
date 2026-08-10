@@ -7,7 +7,11 @@
 
 #include "Factory.hpp"
 #include "advanced/Gate4514.hpp"
-
+#include "advanced/Gate4040.hpp"
+#include "advanced/Gate4094.hpp"
+#include "advanced/Gate4512.hpp"
+#include "advanced/Gate4801.hpp"
+#include "advanced/Gate2716.hpp"
 nts::Factory::Factory()
 {
     registerComponent<nts::AndComponent>("and");
@@ -16,6 +20,11 @@ nts::Factory::Factory()
     registerComponent<nts::Gate4001>("4001");
     registerComponent<nts::Gate4008>("4008");
     registerComponent<nts::Gate4514>("4514");
+    registerComponent<nts::Gate4040>("4040");
+    registerComponent<nts::Gate4094>("4094");
+    registerComponent<nts::Gate4512>("4512");
+    registerComponent<nts::Gate4801>("4801");
+    registerComponent<nts::Gate2716>("2716");
     registerComponent<nts::Gate4011>("4011");
     registerComponent<nts::Gate4013>("4013");
     registerComponent<nts::Gate4017>("4017");

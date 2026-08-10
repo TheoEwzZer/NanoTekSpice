@@ -1,8 +1,11 @@
 #include "Gate4514.hpp"
 
-nts::Gate4514::Gate4514() : mPreviousStrobe(nts::Tristate::TRUE)
+nts::Gate4514::Gate4514()
 {
-    update();
+    mCounter = 0;
+    for (int i=1; i<=24; i++) {
+        mPins[i] = UNDEFINED;
+    }
 }
 
 void nts::Gate4514::update()
@@ -13,41 +16,57 @@ void nts::Gate4514::update()
         {15, 15}
     };
 
-    if ((mPins[23] == nts::Tristate::FALSE) && (mPins[1] == nts::Tristate::FALSE)) {
-        for (const auto &[counter, pin] : counterToPin) {
-            mPins[pin] = (mCounter == counter) ? nts::Tristate::TRUE : nts::Tristate::FALSE;
+    if (mPins[23] == TRUE) {
+        // Inhibit is high, all outputs low
+        for (const auto &[counter, p] : counterToPin) {
+            mPins[p] = FALSE;
+        }
+    } else if (mPins[23] == FALSE) {
+        // Inhibit is low, decode
+        for (const auto &[counter, p] : counterToPin) {
+            mPins[p] = (mCounter == counter) ? TRUE : FALSE;
+        }
+    } else {
+        // Inhibit is undefined, outputs undefined
+        for (const auto &[counter, p] : counterToPin) {
+            mPins[p] = UNDEFINED;
         }
     }
 }
 
 nts::Tristate nts::Gate4514::compute(const size_t pin)
 {
-    static const unordered_map<size_t, int> pinValues = {
-        {2, 1}, {3, 2}, {21, 4}, {22, 8}
-    };
-    for (size_t i = 1; i <= 3; i++) {
-        mPins[i] = getTristate(i);
-    }
-    for (size_t i = 21; i <= 23; i++) {
-        mPins[i] = getTristate(i);
-    }
-    if ((mPins[1] == nts::Tristate::TRUE) || (mPins[1] == nts::Tristate::UNDEFINED)
-    || (mPins[23] == nts::Tristate::UNDEFINED)) {
-        mPreviousStrobe = mPins[23];
-        return nts::Tristate::UNDEFINED;
-    }
-    if ((mPins[23] == nts::Tristate::TRUE) && (mPreviousStrobe == nts::Tristate::FALSE)) {
-        mPreviousStrobe = mPins[23];
-        update();
-        return mPins[pin];
-    }
-    mCounter = 0;
-    for (const auto &[currentPin, value] : pinValues) {
-        if (mPins[currentPin] == nts::Tristate::TRUE) {
-            mCounter += value;
+    mPins[1] = getTristate(1); // Strobe
+    mPins[23] = getTristate(23); // Inhibit
+    mPins[2] = getTristate(2); // A
+    mPins[3] = getTristate(3); // B
+    mPins[21] = getTristate(21); // C
+    mPins[22] = getTristate(22); // D
+
+    if (mPins[1] == TRUE) {
+        // Transparent mode: update counter
+        if (mPins[2] == UNDEFINED || mPins[3] == UNDEFINED || mPins[21] == UNDEFINED || mPins[22] == UNDEFINED) {
+            mCounter = -1; // Undefined state
+        } else {
+            mCounter = (mPins[2] == TRUE ? 1 : 0) |
+                       ((mPins[3] == TRUE ? 1 : 0) << 1) |
+                       ((mPins[21] == TRUE ? 1 : 0) << 2) |
+                       ((mPins[22] == TRUE ? 1 : 0) << 3);
         }
     }
-    std::cout << static_cast<int>(mPreviousStrobe) << std::endl;
-    update();
+    
+    if (mCounter == -1) {
+        static const unordered_map<int, size_t> counterToPin = {
+            {0, 11}, {1, 9}, {2, 10}, {3, 8}, {4, 7}, {5, 6}, {6, 5}, {7, 4},
+            {8, 18}, {9, 17}, {10, 20}, {11, 19}, {12, 14}, {13, 13}, {14, 16},
+            {15, 15}
+        };
+        for (const auto &[c, p] : counterToPin) {
+            mPins[p] = UNDEFINED;
+        }
+    } else {
+        update();
+    }
+    
     return mPins[pin];
 }
